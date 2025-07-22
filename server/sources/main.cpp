@@ -1,28 +1,57 @@
-#include <boost/asio.hpp>
-#include <iostream>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
-using boost::asio::ip::tcp;
+#include <iostream>
+#include <string>
+
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace websocket = beast::websocket;
+namespace net = boost::asio;
+
+
+using tcp = boost::asio::ip::tcp;
 
 int main() {
-    try {
-        boost::asio::io_context io_context;
+    try
+    {
+        net::io_context ioc{1};
 
-        tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 12345));
-        std::cout << "Server is running on port 12345..." << std::endl;
+        tcp::acceptor acceptor {ioc, tcp::endpoint(tcp::v4(), 9002)};
 
-        for (;;) {
-            tcp::socket socket(io_context);
+        std::cout << 
+        "WebSocket server listening on ws://localhost:9002\n";
+
+        for(;;){
+            tcp::socket socket {ioc};
             acceptor.accept(socket);
+            websocket::stream<tcp::socket> ws {std::move(socket)};
 
-            std::string message = "Hello from Boost.Asio!\n";
-            boost::system::error_code ignored_error;
-            boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
+            ws.accept();
 
-            std::cout << "Sent a greeting to a client." << std::endl;
+            for(;;){
+                beast::flat_buffer buffer;
+
+                //read messages
+                ws.read(buffer);
+
+                //output web recive
+                std::string msg = beast::buffers_to_string(buffer.data());
+                std::cout << "Received: " << msg << std::endl;
+
+                //echo
+                ws.text(ws.got_text()); //保留原消息格式
+                ws.write(buffer.data());
+            }
         }
-    } catch (std::exception& e) {
-        std::cerr << "Exception: " << e.what() << "\n";
     }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+    
 
-    return 0;
+    return EXIT_SUCCESS;
 }

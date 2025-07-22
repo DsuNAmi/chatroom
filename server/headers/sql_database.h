@@ -3,5 +3,9 @@
 
 class SQLiteDatabase : public Database{
 
+    public:
     
+
+    private:
+        
 };
