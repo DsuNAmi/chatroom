@@ -7,6 +7,14 @@
 #include <stdexcept>
 #include <utility>
 
+
+enum class Encode{
+    Simple = 1,
+    Normal,
+    Hard,
+    Ultra
+};
+
 class Utils{
     public:
         //myTypes
@@ -27,6 +35,12 @@ class Utils{
             std::forward<std::tuple<Args...>>(query_args),
         std::index_sequence_for<Args...>{});
         }
+
+
+
+        //encrypt function
+        static void EncryptYourString(std::string & str, const std::string & key, Encode encodeMethod = Encode::Simple);
+        static void DecodeYourString(std::string & str, const std::string & key, Encode decodeMethod = Encode::Simple);
 
     private:
         //Impl

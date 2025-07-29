@@ -35,13 +35,21 @@ class User{
             else if(type == "guest"){
                 return std::optional<Level>(Level::Guest);
             }
+            else if(type == "normal"){
+                return std::optional<Level>(Level::Normal);
+            }
             return std::nullopt;
         }
-        virtual std::string GetIdentity() const = 0;
-    protected:
-        // virtual Level GetLevel() = 0;
 
-        // virtual bool Register() = 0;
-        // virtual bool Login() = 0;
-        // virtual bool Logout() = 0;
+        virtual std::string GetIdentity() const = 0;
+        virtual Level GetLevel() const = 0;
+
+        virtual bool Register(std::string && name, std::string && password) = 0;
+        virtual bool Login() = 0;
+        virtual bool Logout() = 0;
+
+        virtual const std::string & GetName() const = 0;
+        virtual const std::string & GetId() const = 0;
+
+        
 };

@@ -41,6 +41,7 @@ class WebSocketServer: public Server{
             public:
                 Session(tcp::socket socket, WebSocketServer & server,
                 std::function<void(std::shared_ptr<Session>)> on_close_callback);
+                virtual ~Session() = default;
                 void Init();
                 void Send(const std::string & message);
                 void Close();

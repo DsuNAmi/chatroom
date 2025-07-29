@@ -3,6 +3,7 @@
 #include "sql_database.h"
 #include "user.h"
 #include "admin.h"
+#include "http_server.h"
 
 int main() {
     // try
@@ -59,26 +60,37 @@ int main() {
     //     std::cout << std::format("key:{}, value:{}\n",k,v);
     // }
 
-    std::unique_ptr<Database> lite_db = std::make_unique<SQLiteDatabase>();
-    // lite_db->Isin("users"sv, std::move(test));
+    // std::unique_ptr<Database> lite_db = std::make_unique<SQLiteDatabase>();
+    // // lite_db->Isin("users"sv, std::move(test));
 
-    auto user_type = User::CheckAccount(lite_db.get(),"admin","1234");
-    std::unique_ptr<User> user = nullptr;
-    if(user_type.has_value()){
-        switch (user_type.value())
-        {
-        case Level::Admin:
-            std::cout << "Create a admin object.\n";
-            user = std::make_unique<Admin>();
-            break;
-        default:
-            std::cout << "other account type.\n";
-            break;
-        }
-    }else{  
-        std::cout << "Account is not exists.\n";
+    // auto user_type = User::CheckAccount(lite_db.get(),"admin","1234");
+    // std::unique_ptr<User> user = nullptr;
+    // if(user_type.has_value()){
+    //     switch (user_type.value())
+    //     {
+    //     case Level::Admin:
+    //         std::cout << "Create a admin object.\n";
+    //         user = std::make_unique<Admin>();
+    //         break;
+    //     default:
+    //         std::cout << "other account type.\n";
+    //         break;
+    //     }
+    // }else{  
+    //     std::cout << "Account is not exists.\n";
+    // }
+    // // if(user) std::cout << user->GetIdentity() << std::endl;
+
+    try{
+        std::unique_ptr<Server> server = std::make_unique<HttpServer>();
+        server->Run();
+        std::cout << "Server is running\n";
+        std::cin.get();
+        server->Close(); 
+    }catch(const std::exception & e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
-    if(user) std::cout << user->GetIdentity() << std::endl;
 
 
     return EXIT_SUCCESS;
