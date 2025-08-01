@@ -15,6 +15,7 @@
 #include <functional>
 #include <iostream>
 #include <exception>
+#include <fstream>
 
 namespace net = boost::asio;
 namespace http = boost::beast::http;

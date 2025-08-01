@@ -5,6 +5,38 @@ void fail(boost::beast::error_code ec, char const * what){
     std::cerr << what << ": " << ec.message() << std::endl;
 }
 
+
+std::string ReadFileContent(std::string_view file_path){
+    std::ifstream file(file_path.data(), std::ios::binary);
+    if(!file){return "";}
+    
+    return std::string(std::istreambuf_iterator<char>(file),std::istreambuf_iterator<char>());
+}
+
+boost::beast::string_view GetMIMEType(boost::beast::string_view path){
+    using boost::beast::iequals;
+    auto const ext = [&path]{
+        auto const pos = path.rfind(".");
+        if(pos == boost::beast::string_view::npos){
+            return boost::beast::string_view{};
+        }
+        return path.substr(pos);
+    }();
+
+    if(iequals(ext, ".html")) return "text/html";
+    if(iequals(ext,".htm")) return "text/html";
+    if(iequals(ext,".css")) return "text/css";
+    if(iequals(ext,".js")) return "application/javascript";
+    if(iequals(ext,".json")) return "application/json";
+    if(iequals(ext,".png")) return "image/png";
+    if(iequals(ext,"jpg")) return "image/jpg";
+    if(iequals(ext,"jpeg")) return "image/jpeg";
+    if(iequals(ext,"gif")) return "image/gif";
+
+    return "aplication/octet-stream";
+    
+}
+
 tcp::endpoint HttpServer::MakeEndpoint(){
     if(hs_ip_addr == "localhost"){
         return tcp::endpoint(tcp::v4(), hs_port_num);   
@@ -170,28 +202,39 @@ void HttpServer::Session::HandleRequest(http::request<http::string_body> && req)
     res.keep_alive(req.keep_alive());
 
     //choose your html page
-    if(req.method() == http::verb::get){
-        if(req.target() == "/"){
-            res.result(http::status::ok);
-            res.set(http::field::server, "Myself Boost HTTP Server");
-            res.set(http::field::content_type, "text/html");
-            res.body() = "<h1>Hello World</h1>";
-            res.prepare_payload();
-        }
-        else{
-            res.result(http::status::not_found);
-            res.set(http::field::server, "Myself Boost HTTP Server");
-            res.set(http::field::content_type, "text/html");
-            res.body() = "<h1>404 Not Found</h1>";
-            res.prepare_payload();
-        }
-    }
-    else if(req.method() == http::verb::post){
-        
-    }else{
+    if(req.method() != http::verb::get){
         res.result(http::status::bad_request);
-        res.set(http::field::server, "Myself Boost HTTP Server");
+        res.set(http::field::server, "My HTTP Server");
         res.set(http::field::content_type, "text/plain");
+        res.body() = "Unknown HTTP method or bad request.";
+        res.prepare_payload();
+        return Write(std::move(res));
+    }
+
+    std::string path_target = std::string(req.target());
+    std::cout << "path_target: " << path_target << std::endl;
+    const std::string html_root = R"(../frontend/)";
+    if(path_target == "/"){
+        path_target = R"(templates/index.html)";
+    }
+
+    std::string abs_path = html_root + path_target;
+
+    std::cout << "abs_path: " << abs_path << std::endl;
+
+    std::string html_file = ReadFileContent(abs_path);
+
+    if(!html_file.empty()){
+        res.result(http::status::ok);
+        res.set(http::field::server, "My HTTP Server");
+        res.set(http::field::content_type, GetMIMEType(abs_path));
+        res.body() = html_file;
+        res.prepare_payload();
+    }else{
+        res.result(http::status::not_found);
+        res.set(http::field::server, "My HTTP Server");
+        res.set(http::field::content_type, "text/html");
+        res.body() = "<h1>404 Not Found</h1><p>The requested URL was not found on this server.</p>";
         res.prepare_payload();
     }
 
