@@ -22,23 +22,6 @@ class User{
             std::string && user_id,
         std::string && password){
             //check the account;
-            if(!databse->Isin("user"sv,Utils::ConstructQuery({"name"sv,"password"sv},
-            std::make_tuple(user_id, password)))){
-                throw std::invalid_argument("Your user_id or password is wrong.\n");
-            }
-            std::string query_sql = std::format("select type from user where name={} and password={}",
-            user_id,password);
-            std::string type = databse->Query(query_sql);
-            if(type == "admin"){
-                return std::optional<Level>(Level::Admin);
-            }
-            else if(type == "guest"){
-                return std::optional<Level>(Level::Guest);
-            }
-            else if(type == "normal"){
-                return std::optional<Level>(Level::Normal);
-            }
-            return std::nullopt;
         }
 
         virtual std::string GetIdentity() const = 0;
