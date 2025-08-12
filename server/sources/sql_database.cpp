@@ -15,7 +15,7 @@ std::string Trim(const std::string & tables){
         return "";
     }
     const auto strEnd = tables.find_last_not_of(whitespace);
-    return tables.substr(strBegin, strEnd);
+    return tables.substr(strBegin, strEnd + 1);
 }
 
 std::vector<std::string> S_TableSQL(std::string && tables){
@@ -74,11 +74,24 @@ bool SQLiteDatabase::CreateDatabase(){
             std::cout << "Database opened successfully." << std::endl;
         }
     }
+    return true;
+}
+
+
+void SQLiteDatabase::StartDatabase(){
+    sql_operator_code = sqlite3_open(sql_db_filename.data(), &sql_db_ptr);
+    SqliteError(sql_operator_code, "Restart database failed.");
 }
 
 bool SQLiteDatabase::CreateTable(std::string_view create_table_sql){
     sql_operator_code = sqlite3_exec(sql_db_ptr, create_table_sql.data(),0,0,0);
-    SqliteError(sql_operator_code, "it's failed to create table.");
+    if(sql_operator_code != SQLITE_OK){
+        SqliteError(sql_operator_code, "it's failed to create table.");
+        return false;
+    }
+
+    return true;
+
 }
 
 void SQLiteDatabase::CloseDatabase(){
@@ -96,10 +109,18 @@ std::vector<std::string> SQLiteDatabase::ImportCreateSQL(std::string_view tables
         std::cerr << "tables_file can't open." << std::endl;
         return {}; 
     }
-    std::string tables(
-        std::istreambuf_iterator<char>(sql_file),
-        std::istream_iterator<char>()
-    );
+    // std::string tables(
+    //     std::istreambuf_iterator<char>(sql_file),
+    //     std::istream_iterator<char>()
+    // );
+
+    std::string tables;
+    std::string line_tables;
+
+    while(std::getline(sql_file, line_tables)){
+        tables += line_tables;
+    }
+    
     return SplitSQL(std::move(tables));
 }
 
